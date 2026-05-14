@@ -1,150 +1,138 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export default function Home() {
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [site, setSite] = useState("");
+  const [priority, setPriority] = useState("Medium");
+
+  useEffect(() => {
+    fetchIncidents();
+  }, []);
+
+  async function fetchIncidents() {
+    const { data } = await supabase
+      .from("incidents")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    setIncidents(data || []);
+  }
+
+  async function addIncident(e: any) {
+    e.preventDefault();
+
+    await supabase.from("incidents").insert([
+      {
+        title,
+        description,
+        site,
+        priority,
+        status: "Open",
+      },
+    ]);
+
+    setTitle("");
+    setDescription("");
+    setSite("");
+    setPriority("Medium");
+
+    fetchIncidents();
+  }
+
   return (
-    <main className="min-h-screen bg-gray-100 flex">
+    <main className="min-h-screen bg-gray-100 p-8">
+      <h1 className="text-5xl font-bold text-blue-700 mb-2">
+        Nexora FM AI OS
+      </h1>
 
-      {/* Sidebar */}
-      <aside className="w-64 bg-blue-700 text-white p-6 hidden md:block">
-        <h1 className="text-2xl font-bold mb-10">
-          Nexora FM AI OS
-        </h1>
+      <p className="text-gray-600 mb-8">
+        Create and track live FM incidents
+      </p>
 
-        <nav className="space-y-4">
-          <div className="bg-blue-800 rounded-lg px-4 py-3">
-            Dashboard
-          </div>
+      <form
+        onSubmit={addIncident}
+        className="bg-white p-6 rounded-2xl shadow mb-8 grid gap-4"
+      >
+        <h2 className="text-2xl font-bold">
+          Add New Incident
+        </h2>
 
-          <div className="px-4 py-3 hover:bg-blue-800 rounded-lg cursor-pointer">
-            Incidents
-          </div>
+        <input
+          className="border p-3 rounded-xl w-full"
+          placeholder="Incident Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
 
-          <div className="px-4 py-3 hover:bg-blue-800 rounded-lg cursor-pointer">
-            Work Orders
-          </div>
+        <input
+          className="border p-3 rounded-xl w-full"
+          placeholder="Site / Location"
+          value={site}
+          onChange={(e) => setSite(e.target.value)}
+        />
 
-          <div className="px-4 py-3 hover:bg-blue-800 rounded-lg cursor-pointer">
-            Sites
-          </div>
+        <select
+          className="border p-3 rounded-xl w-full"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+        >
+          <option>Low</option>
+          <option>Medium</option>
+          <option>High</option>
+          <option>Critical</option>
+        </select>
 
-          <div className="px-4 py-3 hover:bg-blue-800 rounded-lg cursor-pointer">
-            Users
-          </div>
+        <textarea
+          className="border p-3 rounded-xl w-full"
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
-          <div className="px-4 py-3 hover:bg-blue-800 rounded-lg cursor-pointer">
-            Settings
-          </div>
-        </nav>
-      </aside>
+        <button className="bg-blue-700 text-white p-3 rounded-xl font-bold">
+          Submit Incident
+        </button>
+      </form>
 
-      {/* Main Content */}
-      <section className="flex-1 p-8">
-
-        {/* Top Bar */}
-        <div className="flex justify-between items-center mb-10">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800">
-              Dashboard
+      <div className="grid gap-4">
+        {incidents.map((incident) => (
+          <div
+            key={incident.id}
+            className="bg-white p-6 rounded-2xl shadow"
+          >
+            <h2 className="text-3xl font-bold mb-3">
+              {incident.title}
             </h2>
 
-            <p className="text-gray-500 mt-2">
-              AI Operating System for Facility Management
+            <p>
+              <strong>Site:</strong> {incident.site}
+            </p>
+
+            <p>
+              <strong>Priority:</strong> {incident.priority}
+            </p>
+
+            <p>
+              <strong>Status:</strong> {incident.status}
+            </p>
+
+            <p className="mt-4 text-gray-700">
+              {incident.description}
             </p>
           </div>
-
-          <div className="bg-white shadow rounded-xl px-5 py-3">
-            Admin User
-          </div>
-        </div>
-
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h3 className="text-gray-500">
-              Open Incidents
-            </h3>
-
-            <p className="text-4xl font-bold mt-4 text-blue-600">
-              24
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h3 className="text-gray-500">
-              Open Work Orders
-            </h3>
-
-            <p className="text-4xl font-bold mt-4 text-green-600">
-              18
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow p-6">
-            <h3 className="text-gray-500">
-              SLA Compliance
-            </h3>
-
-            <p className="text-4xl font-bold mt-4 text-orange-500">
-              94%
-            </p>
-          </div>
-
-        </div>
-
-        {/* Recent Incidents */}
-        <div className="bg-white rounded-2xl shadow mt-10 p-6">
-
-          <h3 className="text-2xl font-bold mb-6">
-            Recent Incidents
-          </h3>
-
-          <table className="w-full">
-
-            <thead>
-              <tr className="text-left text-gray-500 border-b">
-                <th className="pb-3">Incident</th>
-                <th className="pb-3">Site</th>
-                <th className="pb-3">Priority</th>
-                <th className="pb-3">Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              <tr className="border-b">
-                <td className="py-4">Water Leakage</td>
-                <td>Terminal 5</td>
-                <td className="text-red-500 font-semibold">
-                  High
-                </td>
-                <td>Open</td>
-              </tr>
-
-              <tr className="border-b">
-                <td className="py-4">X-Ray Failure</td>
-                <td>Terminal 3</td>
-                <td className="text-orange-500 font-semibold">
-                  Medium
-                </td>
-                <td>In Progress</td>
-              </tr>
-
-              <tr>
-                <td className="py-4">Lighting Issue</td>
-                <td>Parking Area</td>
-                <td className="text-green-600 font-semibold">
-                  Low
-                </td>
-                <td>Completed</td>
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </section>
-
+        ))}
+      </div>
     </main>
   );
 }
